@@ -74,13 +74,24 @@ export default {
 
       const distance = Math.abs(this.currentFloor - floor);
       const duration = distance * 1000; // 1 этаж в секунду
+      const intervalDuration = 1000; // Интервал обновления позиции лифта
 
-      setTimeout(() => {
-        this.currentFloor = floor;
-        this.elevatorState = 'Отдых';
-        this.rest();
-        this.saveState(); // Сохранение состояния
-      }, duration);
+      let elapsedTime = 0;
+      const interval = setInterval(() => {
+        elapsedTime += intervalDuration;
+
+        if (elapsedTime >= duration) {
+          clearInterval(interval);
+          this.currentFloor = floor;
+          this.elevatorState = 'Отдых';
+          this.rest();
+          this.saveState(); // Сохранение состояния
+        } else {
+          const progress = elapsedTime / duration;
+          const floorDifference = floor - this.currentFloor;
+          this.currentFloor = this.currentFloor + Math.round(floorDifference * progress);
+        }
+      }, intervalDuration);
     },
     rest() {
       setTimeout(() => {
