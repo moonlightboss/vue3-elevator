@@ -3,22 +3,38 @@
     <div>
       <p>Текущий этаж: {{ currentFloor }}</p>
       <p>Состояние лифта: {{ elevatorState }}</p>
-      <p v-if="elevatorState === 'Движение'">Целевой этаж: {{ targetFloor }}</p>
-    </div>
-
-    <div class="elevator-container">
-      <div class="elevator" :style="elevatorStyle"></div>
+      <div class="target-floor">
+        <p>Целевой этаж: {{ elevatorState === 'Движение' ? targetFloor : '' }}</p>
+      </div>
     </div>
     <div class="floor-buttons">
-      <button :class="{ active: isActive, processing: floor === targetFloor, queued: queue.includes(floor) }"
-              v-for="floor in numberOfFloors" :key="floor" @click="callElevator(floor)">
-        Вызов на этаж {{ floor }}
-      </button>
+      <floor-button
+          v-for="floor in numberOfFloors"
+          :key="floor"
+          :floor="floor"
+          :isActive="currentFloor === floor"
+          :isProcessing="floor === targetFloor"
+          :isQueued="queue.includes(floor)"
+          @callElevator="callElevator"
+      ></floor-button>
+    </div>
+    <div class="elevator-container">
+      <elevator-movement
+          :currentFloor="currentFloor"
+          :elevatorState="elevatorState"
+          :targetFloor="targetFloor"
+          :isMoving="isMoving"
+          @moveElevator="moveElevator"
+          @rest="rest"
+      ></elevator-movement>
     </div>
   </div>
 </template>
 
 <script>
+import FloorButton from '../components/FloorButton.vue';
+import ElevatorMovement from '../components/ElevatorMovement.vue';
+
 export default {
   props: {
     numberOfFloors: {
@@ -38,16 +54,6 @@ export default {
       targetFloor: null,
       isMoving: false
     };
-  },
-  computed: {
-    isProcessing() {
-      return this.elevatorState === 'Движение' && this.targetFloor === this.currentFloor;
-    },
-    elevatorStyle() {
-      return {
-        top: `${100 * (this.currentFloor - 1)}px` // Вычисляем позицию лифта
-      };
-    }
   },
   methods: {
     callElevator(floor) {
@@ -74,7 +80,7 @@ export default {
 
       const distance = Math.abs(this.currentFloor - floor);
       const duration = distance * 1000; // 1 этаж в секунду
-      const intervalDuration = 1000; // Интервал обновления позиции лифта
+      const intervalDuration = 999; // Интервал обновления позиции лифта, 999 что бы проверяло быстрее чем происходит движение
 
       let elapsedTime = 0;
       const interval = setInterval(() => {
@@ -127,34 +133,33 @@ export default {
   },
   mounted() {
     this.restoreState(); // Восстановление состояния при загрузке страницы
+  },
+  components: {
+    FloorButton,
+    ElevatorMovement
   }
 };
 </script>
 
-<style>
+<style scoped>
+.floor-buttons {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
 .elevator-container {
   position: relative;
   height: 500px;
   width: 100px;
-  margin-bottom: 20px;
+  margin: 0 auto;
+  background-color: #f0f0f0;
 }
-
 .elevator {
   position: absolute;
-  top: 0;
-  left: 0;
   height: 100px;
   width: 100px;
   background-color: blue;
-  transition: top 1s linear; /* Добавляем анимацию движения */
-}
-
-.floor-buttons button {
-  margin-right: 10px;
-}
-
-.processing {
-  background-color: blue;
-  color: white;
+  transition: top 0.5s;
 }
 </style>
