@@ -1,9 +1,13 @@
 <template>
   <div>
-    <div class="elevator">
+    <div>
       <p>Текущий этаж: {{ currentFloor }}</p>
       <p>Состояние лифта: {{ elevatorState }}</p>
       <p v-if="elevatorState === 'Движение'">Целевой этаж: {{ targetFloor }}</p>
+    </div>
+
+    <div class="elevator-container">
+      <div class="elevator" :style="elevatorStyle"></div>
     </div>
     <div class="floor-buttons">
       <button :class="{ active: isActive, processing: floor === targetFloor, queued: queue.includes(floor) }"
@@ -31,12 +35,18 @@ export default {
       currentFloor: 1,
       elevatorState: 'Покой',
       queue: [],
-      targetFloor: null
+      targetFloor: null,
+      isMoving: false
     };
   },
   computed: {
     isProcessing() {
       return this.elevatorState === 'Движение' && this.targetFloor === this.currentFloor;
+    },
+    elevatorStyle() {
+      return {
+        top: `${100 * (this.currentFloor - 1)}px` // Вычисляем позицию лифта
+      };
     }
   },
   methods: {
@@ -60,6 +70,7 @@ export default {
     },
     moveElevator(floor) {
       this.elevatorState = 'Движение';
+      this.isMoving = true; // Установка флага движения
 
       const distance = Math.abs(this.currentFloor - floor);
       const duration = distance * 1000; // 1 этаж в секунду
@@ -110,8 +121,21 @@ export default {
 </script>
 
 <style>
-.elevator {
+.elevator-container {
+  position: relative;
+  height: 500px;
+  width: 100px;
   margin-bottom: 20px;
+}
+
+.elevator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100px;
+  width: 100px;
+  background-color: blue;
+  transition: top 1s linear; /* Добавляем анимацию движения */
 }
 
 .floor-buttons button {
